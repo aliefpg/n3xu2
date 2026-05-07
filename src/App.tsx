@@ -33,6 +33,48 @@ const NavItem = ({ to, icon: Icon, label, active }: { to: string; icon: any; lab
 
 import { fetchFromSupabase, syncToSupabase } from './lib/supabaseSync';
 
+function Login({ onLogin }: { onLogin: () => void }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === import.meta.env.VITE_APP_PASSWORD) {
+      localStorage.setItem('nexus_auth', 'true');
+      onLogin();
+    } else {
+      setError(true);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 w-full max-w-sm">
+        <div className="flex items-center gap-3 mb-8 justify-center">
+          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">N</div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">NexusHub</h1>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              placeholder="Enter access password"
+            />
+          </div>
+          {error && <p className="text-rose-500 text-sm">Incorrect password</p>}
+          <button type="submit" className="w-full bg-blue-600 text-white font-semibold p-2.5 rounded-lg hover:bg-blue-700 transition-colors">
+            Login
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isHome = location.pathname === '/';
@@ -85,7 +127,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <div className="text-sm font-semibold text-slate-900">Alex Thorne</div>
                 <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Premium</div>
               </div>
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 border border-slate-200 shadow-sm" />
+              <button
+                onClick={() => {
+                  localStorage.removeItem('nexus_auth');
+                  window.location.reload();
+                }}
+                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 border border-slate-200 transition-colors shadow-sm"
+                title="Logout"
+              >
+                <span className="text-xs font-bold leading-none origin-center">Log out</span>
+              </button>
             </div>
           </header>
 
@@ -140,6 +191,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const isAuth = localStorage.getItem('nexus_auth') === 'true';
+    const envPass = import.meta.env.VITE_APP_PASSWORD;
+    // If no password is set in .env, bypass auth for convenience, otherwise require it.
+    return !envPass ? true : isAuth;
+  });
+
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
   const [nutrition, setNutrition] = useState<NutritionEntry[]>(INITIAL_NUTRITION);
@@ -200,6 +258,10 @@ export default function App() {
     const timeout = setTimeout(saveData, 1000); // 1s debounce
     return () => clearTimeout(timeout);
   }, [expenses, notes, nutrition, jobs, customFoodCatalog, workouts, vehicle, bodyProfile, isLoading]);
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   if (isLoading) {
     return (
