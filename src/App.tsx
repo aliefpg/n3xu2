@@ -39,7 +39,8 @@ function Login({ onLogin }: { onLogin: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === import.meta.env.VITE_APP_PASSWORD) {
+    const correctPassword = import.meta.env.VITE_APP_PASSWORD || 'admin';
+    if (password === correctPassword) {
       localStorage.setItem('nexus_auth', 'true');
       onLogin();
     } else {
@@ -192,10 +193,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const isAuth = localStorage.getItem('nexus_auth') === 'true';
-    const envPass = import.meta.env.VITE_APP_PASSWORD;
-    // If no password is set in .env, bypass auth for convenience, otherwise require it.
-    return !envPass ? true : isAuth;
+    return localStorage.getItem('nexus_auth') === 'true';
   });
 
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
