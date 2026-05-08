@@ -84,7 +84,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     <div className="min-h-screen bg-[#f1f5f9] text-[#0f172a] selection:bg-blue-100">
       <div className="relative flex min-h-screen">
         {/* Sidebar */}
-        <aside className="w-[240px] bg-[#1e293b] text-white p-6 hidden lg:flex flex-col gap-10 shrink-0">
+        <aside className="w-[240px] bg-[#1e293b] text-white p-6 hidden lg:flex flex-col gap-10 shrink-0 sticky top-0 h-screen overflow-y-auto custom-scrollbar">
           <div className="flex items-center gap-3 px-2">
             <div className="w-8 h-8 rounded-lg bg-[#2563eb] flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">N</div>
             <h1 className="text-xl font-bold tracking-tight text-white">NexusHub</h1>
@@ -102,9 +102,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col min-w-0 h-[100dvh] md:h-screen overflow-hidden relative">
+        <main className="flex-1 flex flex-col min-w-0 min-h-screen relative">
           <header className={cn(
-            "h-16 md:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 z-20 transition-all",
+            "h-16 md:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 z-20 transition-all sticky top-0",
           )}>
             <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
               {!isHome && (
@@ -141,7 +141,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-2 md:p-8 custom-scrollbar pb-32 md:pb-8">
+          <div className="flex-1 p-2 md:p-8 pb-32 md:pb-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

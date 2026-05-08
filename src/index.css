@@ -16,13 +16,16 @@
     width: 6px;
     height: 6px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.1);
     border-radius: 10px;
   }
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.2);
   }
@@ -31,6 +34,4 @@
 body {
   background-color: var(--color-bg-main);
   color: var(--color-text-primary);
-  overflow: hidden;
 }
-
