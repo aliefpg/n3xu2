@@ -76,6 +76,9 @@ export const fetchFromSupabase = async () => {
 
 export const syncToSupabase = async (data: any) => {
   if (!data) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const userId = user.id;
 
   const handleSync = async (table: string, stateArray: any[], mapFn: (item: any) => any, idField = 'id') => {
     if (!stateArray) return;
@@ -88,7 +91,7 @@ export const syncToSupabase = async (data: any) => {
       await supabase.from(table).delete().in(idField, toDelete);
     }
     if (stateArray.length > 0) {
-      await supabase.from(table).upsert(stateArray.map(mapFn));
+      await supabase.from(table).upsert(stateArray.map(item => ({ ...mapFn(item), user_id: userId })));
     }
   };
 
@@ -105,10 +108,10 @@ export const syncToSupabase = async (data: any) => {
     ]);
 
     if (data.vehicle) {
-      await supabase.from('vehicle_state').upsert({ id: 1, current_odo: data.vehicle.currentOdo });
+      await supabase.from('vehicle_state').upsert({ current_odo: data.vehicle.currentOdo, user_id: userId });
     }
     if (data.bodyProfile) {
-      await supabase.from('body_profile').upsert({ id: 1, weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip });
+      await supabase.from('body_profile').upsert({ weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip, user_id: userId });
     }
   } catch (err) {
     console.error('Failed to sync data to Supabase:', err);

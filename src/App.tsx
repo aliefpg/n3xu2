@@ -8,6 +8,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { motion, AnimatePresence } from 'motion/react';
 import { LayoutGrid, ReceiptText, FileText, ChevronLeft, Apple, Briefcase, Dumbbell, Bike } from 'lucide-react';
 import { cn } from './lib/utils';
+import { supabase } from './lib/supabase';
 import Dashboard from './pages/Dashboard';
 import ExpenseTracker from './pages/ExpenseTracker';
 import NotesDoc from './pages/NotesDoc';
@@ -114,7 +115,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               )}
               <div className="truncate">
                 <h2 className="text-base md:text-xl font-bold text-slate-900 truncate">
-                  {location.pathname === '/' ? 'Hi, Alex!' :
+                  {location.pathname === '/' ? `Hi, User!` :
                     location.pathname === '/expenses' ? 'Expenses' :
                       location.pathname === '/notes' ? 'Docs' :
                         location.pathname === '/nutrition' ? 'Nutrition' :
@@ -125,13 +126,17 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <div className="text-sm font-semibold text-slate-900">Alex Thorne</div>
-                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Premium</div>
+                <div className="text-sm font-semibold text-slate-900">Workspace</div>
+                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Private</div>
               </div>
               <button
-                onClick={() => {
-                  localStorage.removeItem('nexus_auth');
-                  window.location.reload();
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                  } finally {
+                    localStorage.removeItem('nexus_auth');
+                    window.location.reload();
+                  }
                 }}
                 className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 border border-slate-200 transition-colors shadow-sm"
                 title="Logout"
