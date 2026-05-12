@@ -22,7 +22,9 @@ export const fetchFromSupabase = async () => {
 
   const errors = results.filter(r => r.error).map(r => r.error);
   if (errors.length > 0) {
-    console.error("Errors fetching from Supabase:", errors);
+    if (errors[0]?.message !== 'Not configured') {
+      console.error("Errors fetching from Supabase:", errors.map(e => e?.message || e));
+    }
     // If there's an error (e.g. permission denied), return null so the app doesn't overwrite data with empty arrays
     return null;
   }
@@ -74,6 +76,26 @@ export const fetchFromSupabase = async () => {
   };
 };
 
+export const claimLegacyData = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const userId = user.id;
+
+  const tables = [
+    'expenses', 'notes', 'nutrition', 'jobs', 'custom_food_catalog',
+    'workouts', 'vehicle_logs', 'vehicle_parts', 'vehicle_state', 'body_profile'
+  ];
+
+  try {
+    await Promise.all(tables.map(table =>
+      supabase.from(table).update({ user_id: userId }).is('user_id', null)
+    ));
+    console.log('Legacy data claimed successfully.');
+  } catch (err) {
+    console.error('Failed to claim legacy data:', err);
+  }
+};
+
 export const syncToSupabase = async (data: any) => {
   if (!data) return;
   const { data: { user } } = await supabase.auth.getUser();
@@ -108,10 +130,10 @@ export const syncToSupabase = async (data: any) => {
     ]);
 
     if (data.vehicle) {
-      await supabase.from('vehicle_state').upsert({ current_odo: data.vehicle.currentOdo, user_id: userId });
+      await supabase.from('vehicle_state').upsert({ id: 1, current_odo: data.vehicle.currentOdo, user_id: userId });
     }
     if (data.bodyProfile) {
-      await supabase.from('body_profile').upsert({ weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip, user_id: userId });
+      await supabase.from('body_profile').upsert({ id: 1, weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip, user_id: userId });
     }
   } catch (err) {
     console.error('Failed to sync data to Supabase:', err);

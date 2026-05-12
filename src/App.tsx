@@ -32,7 +32,7 @@ const NavItem = ({ to, icon: Icon, label, active }: { to: string; icon: any; lab
   </Link>
 );
 
-import { fetchFromSupabase, syncToSupabase } from './lib/supabaseSync';
+import { fetchFromSupabase, syncToSupabase, claimLegacyData } from './lib/supabaseSync';
 
 function Login({ onLogin }: { onLogin: () => void }) {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -72,7 +72,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         throw new Error('Workspace ID must contain at least 3 letters/numbers');
       }
 
-      const email = `${sanitized}@nexushub.local`;
+      const email = `${sanitized}@nexushub.com`;
 
       if (isSignUp) {
         const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
@@ -101,6 +101,9 @@ function Login({ onLogin }: { onLogin: () => void }) {
           throw signInError;
         }
       }
+
+      // Claim legacy data with user_id = null so it's tied to this workspace
+      await claimLegacyData();
 
       localStorage.setItem('nexus_auth', 'true');
     } catch (err: any) {
