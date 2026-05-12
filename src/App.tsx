@@ -35,17 +35,78 @@ const NavItem = ({ to, icon: Icon, label, active }: { to: string; icon: any; lab
 import { fetchFromSupabase, syncToSupabase } from './lib/supabaseSync';
 
 function Login({ onLogin }: { onLogin: () => void }) {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [workspaceId, setWorkspaceId] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        onLogin();
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        onLogin();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [onLogin]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPassword = import.meta.env.VITE_APP_PASSWORD || 'admin';
-    if (password === correctPassword) {
+    if (!workspaceId || !password) return;
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const sanitized = workspaceId.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (sanitized.length < 3) {
+        throw new Error('Workspace ID must contain at least 3 letters/numbers');
+      }
+
+      const email = `${sanitized}@nexushub.local`;
+
+      if (isSignUp) {
+        const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (signUpError) {
+          if (signUpError.message.includes('already registered')) {
+            throw new Error('Workspace ID already exists. Please log in.');
+          }
+          throw signUpError;
+        }
+
+        if (signUpData.user && !signUpData.session) {
+          throw new Error('Please check your email to verify your account. If you disabled email verification, try logging in now.');
+        }
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) {
+          if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('Incorrect Workspace ID or password.');
+          }
+          throw signInError;
+        }
+      }
+
       localStorage.setItem('nexus_auth', 'true');
-      onLogin();
-    } else {
-      setError(true);
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,20 +119,48 @@ function Login({ onLogin }: { onLogin: () => void }) {
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Workspace ID</label>
+            <input
+              type="text"
+              required
+              value={workspaceId}
+              onChange={(e) => setWorkspaceId(e.target.value)}
+              className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+              placeholder="e.g. myworkspace"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
             <input
               type="password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="Enter access password"
+              className="w-full p-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow"
+              placeholder="Enter your password"
+              minLength={6}
             />
           </div>
-          {error && <p className="text-rose-500 text-sm">Incorrect password</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white font-semibold p-2.5 rounded-lg hover:bg-blue-700 transition-colors">
-            Login
+          {error && <p className="text-rose-500 text-sm">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white font-semibold p-2.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 mt-2"
+          >
+            {loading ? 'Processing...' : (isSignUp ? 'Create Workspace' : 'Enter Workspace')}
           </button>
         </form>
+
+        <div className="mt-6 text-center text-sm text-slate-500">
+          {isSignUp ? 'Already have a Workspace?' : "Don't have a Workspace?"}{' '}
+          <button
+            type="button"
+            onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
+            className="text-blue-600 font-medium hover:underline"
+          >
+            {isSignUp ? 'Log In' : 'Create One'}
+          </button>
+        </div>
       </div>
     </div>
   );
