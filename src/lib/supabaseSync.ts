@@ -76,26 +76,6 @@ export const fetchFromSupabase = async () => {
   };
 };
 
-export const claimLegacyData = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-  const userId = user.id;
-
-  const tables = [
-    'expenses', 'notes', 'nutrition', 'jobs', 'custom_food_catalog',
-    'workouts', 'vehicle_logs', 'vehicle_parts', 'vehicle_state', 'body_profile'
-  ];
-
-  try {
-    await Promise.all(tables.map(table =>
-      supabase.from(table).update({ user_id: userId }).is('user_id', null)
-    ));
-    console.log('Legacy data claimed successfully.');
-  } catch (err) {
-    console.error('Failed to claim legacy data:', err);
-  }
-};
-
 export const syncToSupabase = async (data: any) => {
   if (!data) return;
   const { data: { user } } = await supabase.auth.getUser();
