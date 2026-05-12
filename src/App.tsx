@@ -87,7 +87,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         }
 
         if (signUpData.user && !signUpData.session) {
-          throw new Error('Please check your email to verify your account. If you disabled email verification, try logging in now.');
+          throw new Error('Supabase wajibkan matikan "Confirm email": Buka menu kiri Dasbor Supabase > CONFIGURATION > Sign In / Providers > klik Email > matikan toggle "Confirm email" lalu Save. Setelah itu Log In kembali.');
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -101,9 +101,6 @@ function Login({ onLogin }: { onLogin: () => void }) {
           throw signInError;
         }
       }
-
-      // Claim legacy data with user_id = null so it's tied to this workspace
-      await claimLegacyData();
 
       localStorage.setItem('nexus_auth', 'true');
     } catch (err: any) {
