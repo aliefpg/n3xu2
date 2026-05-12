@@ -102,6 +102,9 @@ function Login({ onLogin }: { onLogin: () => void }) {
         }
       }
 
+      // Claim legacy data with user_id = null so it's tied to this workspace
+      await claimLegacyData();
+
       localStorage.setItem('nexus_auth', 'true');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
