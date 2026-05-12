@@ -102,7 +102,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         }
       }
 
-      localStorage.setItem('nexus_auth', 'true');
+      // Login success handled by supabase.auth.onAuthStateChange
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -223,7 +223,16 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                   try {
                     await supabase.auth.signOut();
                   } finally {
-                    localStorage.removeItem('nexus_auth');
+                    setExpenses([]);
+                    setNotes([]);
+                    setNutrition([]);
+                    setJobs([]);
+                    setCustomFoodCatalog([]);
+                    setWorkouts([]);
+                    setVehicle(INITIAL_VEHICLE_STATE);
+                    setBodyProfile(INITIAL_BODY_PROFILE);
+                    setIsAuthenticated(false);
+                    setHasLoadedFromDb(false);
                     window.location.reload();
                   }
                 }}
@@ -286,14 +295,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('nexus_auth') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
-  const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
-  const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
-  const [nutrition, setNutrition] = useState<NutritionEntry[]>(INITIAL_NUTRITION);
-  const [jobs, setJobs] = useState<JobApplication[]>(INITIAL_JOBS);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [nutrition, setNutrition] = useState<NutritionEntry[]>([]);
+  const [jobs, setJobs] = useState<JobApplication[]>([]);
   const [customFoodCatalog, setCustomFoodCatalog] = useState<FoodLibraryItem[]>([]);
   const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [vehicle, setVehicle] = useState<VehicleState>(INITIAL_VEHICLE_STATE);
@@ -301,8 +309,30 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedFromDb, setHasLoadedFromDb] = useState(false);
 
-  // Load data from Supabase on mount
+  // Check session on mount
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsAuthenticated(true);
+      }
+      setSessionLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Load data from Supabase only after authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     async function fetchData() {
       try {
         const data = await fetchFromSupabase();
@@ -324,7 +354,7 @@ export default function App() {
       }
     }
     fetchData();
-  }, []);
+  }, [isAuthenticated]);
 
   // Save data to Supabase whenever state changes
   useEffect(() => {
@@ -350,6 +380,15 @@ export default function App() {
     const timeout = setTimeout(saveData, 1000); // 1s debounce
     return () => clearTimeout(timeout);
   }, [expenses, notes, nutrition, jobs, customFoodCatalog, workouts, vehicle, bodyProfile, isLoading]);
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-10 text-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <h1 className="text-xl font-bold text-slate-800">Booting NexusHub...</h1>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login onLogin={() => setIsAuthenticated(true)} />;

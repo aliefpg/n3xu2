@@ -7,17 +7,21 @@ export const fetchFromSupabase = async () => {
     return null;
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const userId = user.id;
+
   const results = await Promise.all([
-    supabase.from('expenses').select('*'),
-    supabase.from('notes').select('*'),
-    supabase.from('nutrition').select('*'),
-    supabase.from('jobs').select('*'),
-    supabase.from('custom_food_catalog').select('*'),
-    supabase.from('workouts').select('*'),
-    supabase.from('vehicle_logs').select('*'),
-    supabase.from('vehicle_parts').select('*'),
-    supabase.from('vehicle_state').select('*').limit(1).maybeSingle(),
-    supabase.from('body_profile').select('*').limit(1).maybeSingle(),
+    supabase.from('expenses').select('*').eq('user_id', userId),
+    supabase.from('notes').select('*').eq('user_id', userId),
+    supabase.from('nutrition').select('*').eq('user_id', userId),
+    supabase.from('jobs').select('*').eq('user_id', userId),
+    supabase.from('custom_food_catalog').select('*').eq('user_id', userId),
+    supabase.from('workouts').select('*').eq('user_id', userId),
+    supabase.from('vehicle_logs').select('*').eq('user_id', userId),
+    supabase.from('vehicle_parts').select('*').eq('user_id', userId),
+    supabase.from('vehicle_state').select('*').eq('user_id', userId).limit(1).maybeSingle(),
+    supabase.from('body_profile').select('*').eq('user_id', userId).limit(1).maybeSingle(),
   ]);
 
   const errors = results.filter(r => r.error).map(r => r.error);
@@ -84,13 +88,13 @@ export const syncToSupabase = async (data: any) => {
 
   const handleSync = async (table: string, stateArray: any[], mapFn: (item: any) => any, idField = 'id') => {
     if (!stateArray) return;
-    const { data: existing } = await supabase.from(table).select(idField);
+    const { data: existing } = await supabase.from(table).select(idField).eq('user_id', userId);
     const existingIds = (existing || []).map(r => r[idField]);
     const newStateIds = stateArray.map(r => r[idField]);
     const toDelete = existingIds.filter(id => !newStateIds.includes(id));
 
     if (toDelete.length > 0) {
-      await supabase.from(table).delete().in(idField, toDelete);
+      await supabase.from(table).delete().in(idField, toDelete).eq('user_id', userId);
     }
     if (stateArray.length > 0) {
       await supabase.from(table).upsert(stateArray.map(item => ({ ...mapFn(item), user_id: userId })));
