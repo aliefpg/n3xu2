@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Expense, Note, NutritionEntry, JobApplication, FoodLibraryItem, WorkoutEntry, VehicleState, BodyProfile, VehicleLog, VehiclePart } from '../types';
+import { Expense, Note, NutritionEntry, JobApplication, FoodLibraryItem, WorkoutEntry, VehicleState, BodyProfile, VehicleLog, VehiclePart, VaultItem } from '../types';
 
 export const fetchFromSupabase = async () => {
   if (!supabase) {
@@ -10,7 +10,7 @@ export const fetchFromSupabase = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const userId = user.id;
-
+  
   const results = await Promise.all([
     supabase.from('expenses').select('*').eq('user_id', userId),
     supabase.from('notes').select('*').eq('user_id', userId),
@@ -22,6 +22,15 @@ export const fetchFromSupabase = async () => {
     supabase.from('vehicle_parts').select('*').eq('user_id', userId),
     supabase.from('vehicle_state').select('*').eq('user_id', userId).limit(1).maybeSingle(),
     supabase.from('body_profile').select('*').eq('user_id', userId).limit(1).maybeSingle(),
+    supabase.from('vault_items').select('*').eq('user_id', userId).then(res => {
+      if (res.error) {
+        console.warn("Vault items table sync skipped (table might not exist in Supabase yet):", res.error.message);
+        localStorage.setItem('nexus_vault_sync_error', res.error.message);
+        return { data: [], error: null };
+      }
+      localStorage.removeItem('nexus_vault_sync_error');
+      return res;
+    }),
   ]);
 
   const errors = results.filter(r => r.error).map(r => r.error);
@@ -43,7 +52,8 @@ export const fetchFromSupabase = async () => {
     { data: vehicleLogs },
     { data: vehicleParts },
     { data: vehicleState },
-    { data: bodyProfile }
+    { data: bodyProfile },
+    { data: vaultItems }
   ] = results;
 
   return {
@@ -76,7 +86,10 @@ export const fetchFromSupabase = async () => {
     },
     bodyProfile: bodyProfile ? {
       weight: bodyProfile.weight, height: bodyProfile.height, age: bodyProfile.age, gender: bodyProfile.gender, neck: bodyProfile.neck, waist: bodyProfile.waist, hip: bodyProfile.hip
-    } : null
+    } : null,
+    vaultItems: (vaultItems || []).map(row => ({
+      id: row.id, title: row.title, type: row.type, username: row.username || '', value: row.value, url: row.url || '', notes: row.notes || '', category: row.category || '', lastModified: row.last_modified
+    }))
   };
 };
 
@@ -85,19 +98,40 @@ export const syncToSupabase = async (data: any) => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   const userId = user.id;
-
-  const handleSync = async (table: string, stateArray: any[], mapFn: (item: any) => any, idField = 'id') => {
+  
+  const handleSync = async (table: string, stateArray: any[], mapFn: (item: any) => any, idField= 'id') => {
     if (!stateArray) return;
-    const { data: existing } = await supabase.from(table).select(idField).eq('user_id', userId);
-    const existingIds = (existing || []).map(r => r[idField]);
-    const newStateIds = stateArray.map(r => r[idField]);
-    const toDelete = existingIds.filter(id => !newStateIds.includes(id));
-
-    if (toDelete.length > 0) {
-      await supabase.from(table).delete().in(idField, toDelete).eq('user_id', userId);
-    }
-    if (stateArray.length > 0) {
-      await supabase.from(table).upsert(stateArray.map(item => ({ ...mapFn(item), user_id: userId })));
+    try {
+      const { data: existing, error: selectError } = await supabase.from(table).select(idField).eq('user_id', userId);
+      if (selectError) {
+        if (selectError.message.includes("relation") && selectError.message.includes("does not exist")) {
+          console.warn(`Sync for table "${table}" skipped (table does not exist in Supabase yet).`);
+          return;
+        }
+        throw selectError;
+      }
+      const existingIds = (existing || []).map(r => r[idField]);
+      const newStateIds = stateArray.map(r => r[idField]);
+      const toDelete = existingIds.filter(id => !newStateIds.includes(id));
+      
+      if (toDelete.length > 0) {
+        const { error: delError } = await supabase.from(table).delete().in(idField, toDelete).eq('user_id', userId);
+        if (delError) {
+          if (table === 'vault_items') localStorage.setItem('nexus_vault_sync_error', delError.message);
+          throw delError;
+        }
+      }
+      if (stateArray.length > 0) {
+        const { error: upsertError } = await supabase.from(table).upsert(stateArray.map(item => ({ ...mapFn(item), user_id: userId })));
+        if (upsertError) {
+          if (table === 'vault_items') localStorage.setItem('nexus_vault_sync_error', upsertError.message);
+          throw upsertError;
+        } else {
+          if (table === 'vault_items') localStorage.removeItem('nexus_vault_sync_error');
+        }
+      }
+    } catch (err: any) {
+      console.error(`Failed to sync table "${table}":`, err?.message || err);
     }
   };
 
@@ -110,7 +144,8 @@ export const syncToSupabase = async (data: any) => {
       handleSync('custom_food_catalog', data.customFoodCatalog, (c: FoodLibraryItem) => ({ name: c.name, calories: c.calories, sugar: c.sugar, protein: c.protein, fat: c.fat, carbs: c.carbs, sodium: c.sodium, type: c.type }), 'name'),
       handleSync('workouts', data.workouts, (w: WorkoutEntry) => ({ id: w.id, exercise_name: w.exerciseName, weight: w.weight, sets: w.sets, reps: w.reps, sets_collection: w.setsCollection, date: w.date })),
       handleSync('vehicle_logs', data.vehicle?.logs, (l: VehicleLog) => ({ id: l.id, date: l.date, distance_added: l.distanceAdded, title: l.title, note: l.note, cost: l.cost, type: l.type })),
-      handleSync('vehicle_parts', data.vehicle?.parts, (p: VehiclePart) => ({ id: p.id, name: p.name, last_service_date: p.lastServiceDate, last_service_odo: p.lastServiceOdo, interval_km: p.intervalKm, interval_months: p.intervalMonths, status: p.status }))
+      handleSync('vehicle_parts', data.vehicle?.parts, (p: VehiclePart) => ({ id: p.id, name: p.name, last_service_date: p.lastServiceDate, last_service_odo: p.lastServiceOdo, interval_km: p.intervalKm, interval_months: p.intervalMonths, status: p.status })),
+      handleSync('vault_items', data.vaultItems, (v: VaultItem) => ({ id: v.id, title: v.title, type: v.type, username: v.username, value: v.value, url: v.url, notes: v.notes, category: v.category, last_modified: v.lastModified }))
     ]);
 
     if (data.vehicle) {

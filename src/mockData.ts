@@ -1,4 +1,4 @@
-import { Expense, Note, NutritionEntry, JobApplication } from './types';
+import { Expense, Note, NutritionEntry, JobApplication, VaultItem } from './types';
 
 export const INITIAL_EXPENSES: Expense[] = [
   { id: '1', amount: 50.50, category: 'Food', description: 'Lunch at Cafe', date: new Date().toISOString() },
@@ -15,6 +15,47 @@ export const INITIAL_NUTRITION: NutritionEntry[] = [
 
 export const INITIAL_JOBS: JobApplication[] = [
   { id: '1', company: 'NexusHub', position: 'Software Engineer', status: 'Applied', dateApplied: new Date().toISOString(), location: 'Remote', salary: '', url: '', notes: 'Welcome!', platform: 'Company Site', source: 'Direct' },
+];
+
+export const INITIAL_VAULT_ITEMS: VaultItem[] = [
+  {
+    id: '1',
+    title: 'Gmail Pribadi Alief',
+    type: 'password',
+    username: 'alief@nexushub.com',
+    value: 'A1i3F_SeCuRe2026',
+    url: 'https://accounts.google.com',
+    notes: 'Primary Gmail used for accounts and work registration.',
+    category: 'Personal',
+    lastModified: '2026-05-25T05:00:00Z'
+  },
+  {
+    id: '2',
+    title: 'Pattern Lock HP Utama',
+    type: 'pattern',
+    value: '0,1,2,4,6,7,8',
+    notes: 'Z-shape gesture slide pattern for main testing Android smartphone screen.',
+    category: 'Devices',
+    lastModified: '2026-05-24T12:00:00Z'
+  },
+  {
+    id: '3',
+    title: 'ATM Mandiri PIN',
+    type: 'pin',
+    value: '250526',
+    notes: 'Mandiri Gold card PIN number',
+    category: 'Finance',
+    lastModified: '2026-05-25T01:30:00Z'
+  },
+  {
+    id: '4',
+    title: 'Github SSH Private Key',
+    type: 'key',
+    value: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+BqELm5zD/1E...',
+    notes: 'SSH secret deploy key for development VPS containers.',
+    category: 'Work',
+    lastModified: '2026-05-23T09:15:00Z'
+  }
 ];
 
 export const INITIAL_BODY_PROFILE = {

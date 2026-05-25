@@ -4,11 +4,13 @@ import {
   Plus, Search, Building, MapPin, Link2, 
   Trash2, Briefcase, ExternalLink, Calendar,
   CheckCircle2, XCircle, Clock, AlertCircle,
-  MoreVertical, Filter, TrendingUp
+  MoreVertical, Filter, TrendingUp, Edit2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 import { JobApplication, ApplicationStatus } from '../types';
+import MetricCard from '../components/MetricCard';
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 
 const STATUS_CONFIG: Record<ApplicationStatus, { color: string; icon: any; bg: string }> = {
   Applied: { color: 'text-blue-600', bg: 'bg-blue-50', icon: Clock },
@@ -24,6 +26,8 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'All'>('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<JobApplication | null>(null);
 
   // New Application State
   const [newJob, setNewJob] = useState({
@@ -39,18 +43,9 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
     source: ''
   });
 
-  const handleAddJob = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newJob.company || !newJob.position) return;
-
-    const job: JobApplication = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...newJob,
-      dateApplied: new Date(newJob.dateApplied).toISOString()
-    };
-
-    setJobs([job, ...jobs]);
+  const handleCloseModal = () => {
     setIsAddModalOpen(false);
+    setEditingJobId(null);
     setNewJob({
       company: '',
       position: '',
@@ -65,8 +60,48 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
     });
   };
 
+  const handleAddJob = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newJob.company || !newJob.position) return;
+
+    if (editingJobId) {
+      setJobs(prev => prev.map(j => j.id === editingJobId ? {
+        ...j,
+        ...newJob,
+        dateApplied: new Date(newJob.dateApplied).toISOString()
+      } : j));
+    } else {
+      const job: JobApplication = {
+        id: Math.random().toString(36).substr(2, 9),
+        ...newJob,
+        dateApplied: new Date(newJob.dateApplied).toISOString()
+      };
+      setJobs([job, ...jobs]);
+    }
+
+    handleCloseModal();
+  };
+
+  const startEditJob = (job: JobApplication) => {
+    setEditingJobId(job.id);
+    setNewJob({
+      company: job.company || '',
+      position: job.position || '',
+      status: job.status || 'Applied',
+      location: job.location || '',
+      salary: job.salary || '',
+      url: job.url || '',
+      notes: job.notes || '',
+      dateApplied: job.dateApplied ? new Date(job.dateApplied).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      platform: job.platform || '',
+      source: job.source || ''
+    });
+    setIsAddModalOpen(true);
+  };
+
   const removeJob = (id: string) => {
     setJobs(prev => prev.filter(j => j.id !== id));
+    setJobToDelete(null);
   };
 
   const updateJobStatus = (id: string, status: ApplicationStatus) => {
@@ -117,10 +152,10 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Track Application</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Add a new job to your list</p>
+                <h3 className="text-xl font-bold text-slate-900">{editingJobId ? 'Edit Application' : 'Track Application'}</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{editingJobId ? 'Update your job application details' : 'Add a new job to your list'}</p>
               </div>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+              <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <Plus size={24} className="rotate-45" />
               </button>
             </div>
@@ -212,7 +247,7 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
               </div>
 
               <button type="submit" className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold shadow-lg transition-all sticky bottom-0">
-                Save Application
+                {editingJobId ? 'Update Application' : 'Save Application'}
               </button>
             </form>
           </div>
@@ -221,29 +256,36 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
 
       {/* Stats Section */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-1">
-          <span className="text-slate-500 uppercase tracking-widest text-[10px] font-bold">Total Apps</span>
-          <h3 className="text-3xl font-bold text-slate-900">{stats.total}</h3>
-          <div className="mt-2 text-[10px] text-slate-400 font-medium">Keep moving forward!</div>
-        </div>
-        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-1">
-          <span className="text-blue-500 uppercase tracking-widest text-[10px] font-bold">Active</span>
-          <h3 className="text-3xl font-bold text-slate-900">{stats.active}</h3>
-          <div className="flex items-center gap-1 text-blue-600 text-[10px] font-semibold mt-2">
-             <TrendingUp size={12} />
-             <span>Potential progress</span>
-          </div>
-        </div>
-        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-1">
-          <span className="text-emerald-500 uppercase tracking-widest text-[10px] font-bold">Offers</span>
-          <h3 className="text-3xl font-bold text-slate-900">{stats.offers}</h3>
-          <div className="mt-2 text-[10px] text-emerald-600 font-bold">Well done! 🥂</div>
-        </div>
-        <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col gap-1">
-          <span className="text-rose-500 uppercase tracking-widest text-[10px] font-bold">Rejected</span>
-          <h3 className="text-3xl font-bold text-slate-900">{stats.rejected}</h3>
-          <div className="mt-2 text-[10px] text-slate-400 font-medium">Redirected to better.</div>
-        </div>
+        <MetricCard 
+          title="Total Apps" 
+          value={stats.total} 
+          subtitle="Keep moving forward!" 
+          icon={Building} 
+          iconClassName="text-slate-500" 
+        />
+        <MetricCard 
+          title="Active" 
+          value={stats.active} 
+          subtitle="Potential progress" 
+          trend={{ value: "Potensial", isPositive: true }}
+          icon={Briefcase} 
+          iconClassName="text-blue-505" 
+        />
+        <MetricCard 
+          title="Offers" 
+          value={stats.offers} 
+          subtitle="Well done! 🥂" 
+          trend={{ value: "Win 🥂", isPositive: true }}
+          icon={CheckCircle2} 
+          iconClassName="text-emerald-505" 
+        />
+        <MetricCard 
+          title="Rejected" 
+          value={stats.rejected} 
+          subtitle="Redirected to better." 
+          icon={XCircle} 
+          iconClassName="text-rose-505" 
+        />
       </div>
 
       {/* Filter and Search */}
@@ -341,14 +383,17 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                        {job.url && (
-                         <a href={job.url} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all flex items-center gap-2 text-xs font-bold">
+                         <a href={job.url} target="_blank" rel="noopener noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all flex items-center gap-2 text-xs font-bold" title="Open Job Listing">
                             <ExternalLink size={14} />
                             <span className="hidden sm:inline">Listing</span>
                          </a>
                        )}
-                       <button onClick={() => removeJob(job.id)} className="p-2.5 text-slate-200 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all">
+                       <button onClick={() => startEditJob(job)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit Application">
+                          <Edit2 size={16} />
+                       </button>
+                       <button onClick={() => setJobToDelete(job)} className="p-2.5 text-slate-200 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Delete Application">
                           <Trash2 size={16} />
                        </button>
                     </div>
@@ -365,6 +410,21 @@ export default function JobTracker({ jobs, setJobs }: { jobs: JobApplication[], 
           })
         )}
       </div>
+
+      <ConfirmDeleteModal
+        isOpen={!!jobToDelete}
+        title="Hapus Lamaran Pekerjaan?"
+        description={
+          jobToDelete ? (
+            <>
+              Apakah Anda yakin ingin menghapus lamaran di <strong className="font-bold text-stone-900">"{jobToDelete.company}"</strong> untuk posisi <strong className="font-bold text-stone-900">"{jobToDelete.position}"</strong>?<br />Tindakan ini tidak dapat dibatalkan.
+            </>
+          ) : ""
+        }
+        onConfirm={() => removeJob(jobToDelete?.id || '')}
+        onCancel={() => setJobToDelete(null)}
+      />
+
     </div>
   );
 }

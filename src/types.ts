@@ -114,3 +114,18 @@ export interface VehicleState {
   parts: VehiclePart[];
 }
 
+export type VaultItemType = 'password' | 'pattern' | 'pin' | 'key';
+
+export interface VaultItem {
+  id: string;
+  title: string;
+  type: VaultItemType;
+  username?: string;
+  value: string; // contains password, PIN, key string, or pattern path like "0,1,2,5,8" (coordinates)
+  url?: string;
+  notes?: string;
+  category?: string;
+  lastModified: string;
+}
+
+
