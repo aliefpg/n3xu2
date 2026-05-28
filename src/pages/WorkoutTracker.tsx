@@ -133,7 +133,7 @@ export default function WorkoutTracker({
 
     const peakWeight = Math.max(...parsedSetsCollection.map(s => s.weight));
     const totalSets = parsedSetsCollection.length;
-    const peakReps = parsedSetsCollection[0].reps; // fallback
+    const peakReps = parsedSetsCollection[0].reps;
 
     const newLog: WorkoutEntry = {
       id: Math.random().toString(36).substr(2, 9),

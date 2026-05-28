@@ -30,8 +30,8 @@ export interface NutritionEntry {
   sugar: number;
   protein: number;
   fat: number;
-  carbs: number; // added
-  sodium: number; // added in mg
+  carbs: number;
+  sodium: number; // mg
   type: 'food' | 'drink';
   date: string;
 }

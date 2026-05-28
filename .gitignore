@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+package-lock.json
+yarn.lock
 
 # Build output
 build/
@@ -8,6 +10,8 @@ dist/
 # Environment & Secrets
 .env*
 !.env.example
+SECURITY_FIXES_DOCUMENTATION.md
+stress-test.ts
 
 # Local data (user-specific, synced from Supabase)
 data/*.json
@@ -26,3 +30,11 @@ Thumbs.db
 # IDE settings (optional - uncomment if you want)
 # .vscode/
 # .idea/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+.tmp/
+*.tmp

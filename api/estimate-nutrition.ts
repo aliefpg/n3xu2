@@ -3,22 +3,24 @@ import { GoogleGenAI, Type } from "@google/genai";
 // Initialize Gemini client with User-Agent header for tracking.
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
-  }
 });
 
 export default async function handler(req: any, res: any) {
-  // Handle CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  // CORS: Restrict to specific origins
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'https://n3xu2.vercel.app'
+  ];
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -29,14 +31,24 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { query } = req.body;
-  if (!query) {
-    return res.status(400).json({ error: "Query is required" });
+  let { query } = req.body;
+  
+  // Strict validation: must be string, not empty, not too long
+  if (!query || typeof query !== 'string') {
+    console.warn(`Invalid query: type=${typeof query}, value=${query}`);
+    return res.status(400).json({ error: "Query is required and must be a string" });
+  }
+
+  query = query.trim();
+  if (query.length === 0 || query.length > 500) {
+    console.warn(`Invalid query length: ${query.length}`);
+    return res.status(400).json({ error: "Query must be between 1-500 characters" });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "MISSING_API_KEY" });
+    console.error('CRITICAL: GEMINI_API_KEY not configured in Vercel environment');
+    return res.status(500).json({ error: "Failed to process request" });
   }
 
   try {
@@ -96,7 +108,8 @@ export default async function handler(req: any, res: any) {
     const result = JSON.parse(jsonStr);
     return res.status(200).json(result);
   } catch (err: any) {
-    console.error("AI Estimation Serverless Error:", err);
-    return res.status(500).json({ error: err.message || "Failed to process request" });
+    // Log error on server side only - don't expose details to client
+    console.error("AI Estimation Error:", err.message);
+    return res.status(500).json({ error: "Failed to process request" });
   }
 }

@@ -6,7 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutGrid, ReceiptText, FileText, ChevronLeft, Apple, Briefcase, Dumbbell, Bike, Lock, User, LogOut, X, Menu, Settings, Pin } from 'lucide-react';
+import { LayoutGrid, ReceiptText, FileText, ChevronLeft, Apple, Briefcase, Dumbbell, Bike, Lock, User, LogOut, X, Menu, Settings, Pin, Sparkles } from 'lucide-react';
+import UpdatesModal from './components/UpdatesModal';
 import { cn } from './lib/utils';
 import { supabase } from './lib/supabase';
 import Dashboard from './pages/Dashboard';
@@ -179,6 +180,16 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
   const isHome = location.pathname === '/';
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
+  const [hasNewUpdate, setHasNewUpdate] = useState(() => {
+    return localStorage.getItem('nexus_seen_update_v3.2') !== 'true';
+  });
+
+  const handleOpenUpdates = () => {
+    setUpdatesOpen(true);
+    setHasNewUpdate(false);
+    localStorage.setItem('nexus_seen_update_v3.2', 'true');
+  };
 
   // Load modules configuration from localStorage, default is true for all
   const [visibleModules, setVisibleModules] = useState<Record<string, boolean>>(() => {
@@ -195,9 +206,7 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
           jobs: parsed.jobs !== false,
           vault: parsed.vault !== false,
         };
-      } catch (e) {
-        // fallback
-      }
+      } catch (e) {}
     }
     return {
       expenses: true,
@@ -219,9 +228,7 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
         if (Array.isArray(parsed)) {
           return parsed;
         }
-      } catch (e) {
-        // fallback
-      }
+      } catch (e) {}
     }
     return ['expenses', 'notes', 'vault'];
   });
@@ -272,7 +279,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
   // Determine remaining unpinned active modules to pad with
   const remainingActiveModules = ALL_MODULES.filter(m => visibleModules[m.id] && !pinnedModules.includes(m.id));
 
-  // Combined list of exactly the 3 quick-access modules we show
   const bottomBarShortcuts = [...activePins, ...remainingActiveModules].slice(0, 3);
 
   return (
@@ -344,6 +350,20 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleOpenUpdates}
+                className="relative w-10 h-10 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-650 hover:text-amber-750 transition-all shadow-sm cursor-pointer"
+                title="Catatan Update Baru"
+              >
+                <Sparkles size={18} className="animate-pulse" />
+                {hasNewUpdate && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                )}
+              </button>
+
               <div className="text-right hidden sm:block">
                 <div className="text-sm font-semibold text-slate-900">{userName || 'Workspace'}</div>
                 <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Private</div>
@@ -398,7 +418,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
             </AnimatePresence>
           </div>
 
-          {/* Premium Bottom Bar on Mobile with exactly 5 adaptive slots */}
           <div className="lg:hidden fixed bottom-4 left-4 right-4 h-16 bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl flex items-center justify-around z-50 shadow-[0_8px_32px_rgba(0,0,0,0.08)] px-2">
              {/* Slot 1: Home */}
              <Link 
@@ -413,7 +432,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                 <span className="text-[10px] font-sans font-medium">Home</span>
              </Link>
 
-              {/* Slot 2: Pinned module 1 or empty */}
              {bottomBarShortcuts.length > 0 ? (
                <Link 
                  to={bottomBarShortcuts[0].path} 
@@ -439,7 +457,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                </button>
              )}
 
-             {/* Slot 3: Center Menu Hub Action Trigger */}
              <div className="relative -top-3 shrink-0">
                <button
                  onClick={() => setMenuOpen(!menuOpen)}
@@ -455,7 +472,7 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                </button>
              </div>
 
-             {/* Slot 4: Pinned module 2 or Settings or Logout */}
+
              {bottomBarShortcuts.length > 1 ? (
                <Link 
                  to={bottomBarShortcuts[1].path} 
@@ -489,7 +506,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                </button>
              )}
 
-             {/* Slot 5: Pinned module 3 or Settings or Logout */}
              {bottomBarShortcuts.length > 2 ? (
                <Link 
                  to={bottomBarShortcuts[2].path} 
@@ -537,7 +553,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                   className="lg:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40"
                 />
 
-                {/* Main sliding sheet */}
                 <motion.div
                   initial={{ y: "100%" }}
                   animate={{ y: 0 }}
@@ -545,13 +560,11 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                   transition={{ type: "spring", damping: 25, stiffness: 220 }}
                   className="lg:hidden fixed bottom-4 left-4 right-4 bg-white rounded-3xl shadow-2xl z-50 flex flex-col pb-6 overflow-hidden border border-slate-100 max-h-[80vh]"
                 >
-                  {/* Pull Indicator / Top Header */}
                   <div className="flex flex-col items-center py-3 border-b border-slate-100 shrink-0">
                     <div className="w-10 h-1 bg-slate-300 rounded-full mb-1" />
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-sans">Menu Navigasi Hub</span>
                   </div>
 
-                  {/* Services/Modules Lists scrollable */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                     <div className="grid grid-cols-2 gap-2.5">
                       {/* Dashboard */}
@@ -572,7 +585,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                         </div>
                       </Link>
 
-                      {/* Map of other ENABLED modules */}
                       {ALL_MODULES.map(m => {
                         if (!visibleModules[m.id]) return null;
                         const isCurrentActive = location.pathname === m.path;
@@ -597,7 +609,6 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                         );
                       })}
 
-                      {/* Settings trigger modal shortcut */}
                       <button
                         onClick={() => {
                           setMenuOpen(false);
@@ -680,7 +691,7 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
                     </div>
                     <button
                       onClick={() => setSettingsOpen(false)}
-                      className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                      className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
                     >
                       <X size={18} />
                     </button>
@@ -814,6 +825,9 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
               </>
             )}
           </AnimatePresence>
+
+          {/* Separated What's New / Log Update Modal */}
+          <UpdatesModal isOpen={updatesOpen} onClose={() => setUpdatesOpen(false)} />
         </main>
       </div>
     </div>
@@ -860,7 +874,6 @@ export default function App() {
     }
   };
 
-  // Check session on mount
   useEffect(() => {
     if (localStorage.getItem('is_dummy_user') === 'true') {
       setIsAuthenticated(true);
@@ -973,7 +986,6 @@ export default function App() {
     fetchData();
   }, [isAuthenticated]);
 
-  // Save data to Supabase or localStorage whenever state changes
   useEffect(() => {
     if (isLoading || !hasLoadedFromDb) return; // Don't save initial state or if fetch failed
 
