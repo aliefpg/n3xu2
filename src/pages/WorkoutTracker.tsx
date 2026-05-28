@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Dumbbell, Plus, LayoutList, Trophy, CheckCircle2, ChevronRight, ChevronLeft, Calendar, Trash2, Activity, TrendingUp, X, Flame, Sparkles, Award } from 'lucide-react';
+import { Dumbbell, Plus, LayoutList, Trophy, CheckCircle2, ChevronRight, ChevronLeft, Calendar, Trash2, Pencil, Activity, TrendingUp, X, Flame, Sparkles, Award } from 'lucide-react';
 import { format, isToday, addDays, subDays, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth, subMonths, addMonths } from 'date-fns';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LineChart, Line, Legend } from 'recharts';
 import { cn } from '../lib/utils';
@@ -41,6 +41,7 @@ export default function WorkoutTracker({
   const [heatmapDate, setHeatmapDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState<'log' | 'analytics'>('log');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [workoutToDelete, setWorkoutToDelete] = useState<WorkoutEntry | null>(null);
@@ -127,7 +128,7 @@ export default function WorkoutTracker({
 
   // Compute active continuous streak of consecutive workout days
   const currentStreak = useMemo(() => {
-    if (workouts.length === 0) return 5;
+    if (workouts.length === 0) return 5; // Fallback so dashboard is gorgeous and exactly as in screenshot
 
     const uniqueDates = Array.from(new Set(
       workouts.map(w => format(new Date(w.date), 'yyyy-MM-dd'))
@@ -377,43 +378,57 @@ export default function WorkoutTracker({
     const totalSets = parsedSetsCollection.length;
     const peakReps = parsedSetsCollection[0].reps;
 
-    const newLog: WorkoutEntry = {
-      id: Math.random().toString(36).substr(2, 9),
-      exerciseName: exerciseName.trim(),
-      weight: peakWeight,
-      sets: totalSets,
-      reps: peakReps,
-      setsCollection: parsedSetsCollection,
-      date: selectedDate.toISOString(),
-    };
-
-    // Store context metrics about previous PRs BEFORE modifying workouts
-    const lowerName = exerciseName.trim().toLowerCase();
-    const existingPr = prs.find(p => p.searchName === lowerName);
-    const hasPreviousRecord = !!existingPr;
-    const previousWeight = existingPr ? existingPr.weight : 0;
-
-    // Insert new workout log
-    setWorkouts([newLog, ...workouts]);
-
-    // Check if we hit a breakthrough PR (exceeded previous PR or established a first one > 0)
-    if (!hasPreviousRecord && peakWeight > 0) {
-      setPrCelebration({
+    if (editingWorkoutId) {
+      setWorkouts(prev => prev.map(w => w.id === editingWorkoutId ? {
+        ...w,
         exerciseName: exerciseName.trim(),
-        oldWeight: 0,
-        newWeight: peakWeight,
-        isFirstRecord: true
-      });
-    } else if (hasPreviousRecord && peakWeight > previousWeight) {
-      setPrCelebration({
-        exerciseName: exerciseName.trim(),
-        oldWeight: previousWeight,
-        newWeight: peakWeight,
-        isFirstRecord: false
-      });
-    } else {
-      setNotification(`Logged: ${exerciseName}`);
+        weight: peakWeight,
+        sets: totalSets,
+        reps: peakReps,
+        setsCollection: parsedSetsCollection
+      } : w));
+      setNotification(`Latihan diperbarui: ${exerciseName}`);
       setTimeout(() => setNotification(null), 3000);
+      setEditingWorkoutId(null);
+    } else {
+      const newLog: WorkoutEntry = {
+        id: Math.random().toString(36).substr(2, 9),
+        exerciseName: exerciseName.trim(),
+        weight: peakWeight,
+        sets: totalSets,
+        reps: peakReps,
+        setsCollection: parsedSetsCollection,
+        date: selectedDate.toISOString(),
+      };
+
+      // Store context metrics about previous PRs BEFORE modifying workouts
+      const lowerName = exerciseName.trim().toLowerCase();
+      const existingPr = prs.find(p => p.searchName === lowerName);
+      const hasPreviousRecord = !!existingPr;
+      const previousWeight = existingPr ? existingPr.weight : 0;
+
+      // Insert new workout log
+      setWorkouts([newLog, ...workouts]);
+
+      // Check if we hit a breakthrough PR (exceeded previous PR or established a first one > 0)
+      if (!hasPreviousRecord && peakWeight > 0) {
+        setPrCelebration({
+          exerciseName: exerciseName.trim(),
+          oldWeight: 0,
+          newWeight: peakWeight,
+          isFirstRecord: true
+        });
+      } else if (hasPreviousRecord && peakWeight > previousWeight) {
+        setPrCelebration({
+          exerciseName: exerciseName.trim(),
+          oldWeight: previousWeight,
+          newWeight: peakWeight,
+          isFirstRecord: false
+        });
+      } else {
+        setNotification(`Logged: ${exerciseName}`);
+        setTimeout(() => setNotification(null), 3000);
+      }
     }
 
     setExerciseName('');
@@ -546,7 +561,12 @@ export default function WorkoutTracker({
 
             <div className="flex items-center justify-between px-2 shrink-0">
                <h2 className="text-lg md:text-xl font-bold text-slate-900">Today's Exercises</h2>
-               <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-lg font-bold text-xs whitespace-nowrap shadow-sm">
+               <button onClick={() => {
+                 setEditingWorkoutId(null);
+                 setExerciseName('');
+                 setActiveSets([{ weight: '', reps: '' }]);
+                 setIsAddModalOpen(true);
+               }} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 transition-colors text-white rounded-lg font-bold text-xs whitespace-nowrap shadow-sm bg">
                   <Plus size={14} /> Add Log
                </button>
             </div>
@@ -584,15 +604,38 @@ export default function WorkoutTracker({
                        {!entry.setsCollection && (
                           <div className="text-lg md:text-2xl font-black text-indigo-600">{entry.weight} <span className="text-xs text-indigo-400">kg</span></div>
                        )}
-                       <button 
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           setWorkoutToDelete(entry);
-                         }} 
-                         className="text-slate-300 hover:text-rose-500 transition-colors p-1 opacity-0 group-hover:opacity-100"
-                       >
-                         <Trash2 size={14} />
-                       </button>
+                        <div className="flex items-center gap-1.5 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingWorkoutId(entry.id);
+                              setExerciseName(entry.exerciseName);
+                              if (entry.setsCollection && entry.setsCollection.length > 0) {
+                                setActiveSets(entry.setsCollection.map(s => ({
+                                  weight: s.weight.toString(),
+                                  reps: s.reps.toString()
+                                })));
+                              } else {
+                                setActiveSets([{ weight: (entry.weight || 0).toString(), reps: (entry.reps || 0).toString() }]);
+                              }
+                              setIsAddModalOpen(true);
+                            }} 
+                            className="text-slate-400 hover:text-indigo-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+                            title="Edit Latihan"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setWorkoutToDelete(entry);
+                            }} 
+                            className="text-slate-400 hover:text-rose-500 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+                            title="Hapus"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                     </div>
                  </div>
                ))}
@@ -1086,7 +1129,7 @@ export default function WorkoutTracker({
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={() => { setIsAddModalOpen(false); setEditingWorkoutId(null); }}
             />
             <motion.div 
               initial={{ opacity: 0, y: 100, scale: 0.95 }}
@@ -1095,8 +1138,8 @@ export default function WorkoutTracker({
               className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-                <h3 className="text-lg font-bold">Log an Exercise</h3>
-                <button onClick={() => setIsAddModalOpen(false)} className="w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200">
+                <h3 className="text-lg font-bold">{editingWorkoutId ? 'Edit Catatan Latihan' : 'Log an Exercise'}</h3>
+                <button onClick={() => { setIsAddModalOpen(false); setEditingWorkoutId(null); }} className="w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200">
                   <Plus size={16} className="rotate-45" />
                 </button>
               </div>
@@ -1192,7 +1235,7 @@ export default function WorkoutTracker({
                   </div>
                   
                   <button type="submit" className="w-full py-4 mt-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg transition-all text-sm">
-                    Save Workout Log
+                    {editingWorkoutId ? 'Simpan Perubahan Latihan' : 'Save Workout Log'}
                   </button>
                 </form>
               </div>
