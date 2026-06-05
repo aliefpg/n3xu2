@@ -6,6 +6,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { cn } from '../lib/utils';
 import { WorkoutEntry } from '../types';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
+import firstplace from '../public/svg/1st-prize.svg'
+import secondplace from '../public/svg/2nd-place.svg'
+import thirdplace from '../public/svg/3rd-place.svg'
+import fire from '../public/svg/fire-svgrepo-com.svg'
+import trendup from '../public/svg/icons8-chart-arrow-rise-64.svg'
+import trophy from '../public/svg/trophy-star.svg'
 
 const prContainerVariants = {
   hidden: { opacity: 0 },
@@ -164,7 +170,7 @@ export default function WorkoutTracker({
     const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
     const startOfWeek = addDays(today, mondayOffset);
 
-    const dayAbbreviations = ['S', 'S', 'R', 'K', 'J', 'S', 'M']; // Senin, Selasa, Rabu, Kamis, Jumat, Sabtu, Minggu
+    const dayAbbreviations = ['S', 'S', 'R', 'K', 'J', 'S', 'M'];
     
     return [...Array(7)].map((_, i) => {
       const date = addDays(startOfWeek, i);
@@ -681,7 +687,7 @@ export default function WorkoutTracker({
               <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#fbbf24]/5 blur-[50px] rounded-full pointer-events-none" />
               
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">🏆</span>
+                <img src={trophy} className="w-6 h-6 shrink-0 active:scale-95 transition-transform" alt="Trophy" referrerPolicy="no-referrer" />
                 <div className="flex flex-col">
                   <h2 className="font-extrabold text-white text-sm tracking-tight leading-none">All Personal Records</h2>
                   <p className="text-[9px] text-slate-400 mt-1 font-medium select-none">Max weight per exercise — all time</p>
@@ -691,7 +697,7 @@ export default function WorkoutTracker({
               <div className="divide-y divide-white/[0.04] space-y-1.5 flex-1 max-h-[300px] overflow-y-auto pr-1">
                 {allPrList.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center text-slate-400 select-none">
-                    <span className="text-2xl mb-2">🏆</span>
+                    <img src={trophy} className="w-12 h-12 mb-3 shrink-0" alt="Trophy" referrerPolicy="no-referrer" />
                     <p className="text-xs font-semibold leading-relaxed">Belum ada rekor terdaftar.</p>
                     <p className="text-[10px] text-slate-500 mt-1 max-w-[200px]">Catat latihan pertamamu untuk melihat medali rekor di sini!</p>
                   </div>
@@ -706,7 +712,7 @@ export default function WorkoutTracker({
                               <div className="w-[5px] h-full bg-blue-550 -rotate-12 origin-top rounded-b-sm" />
                             </div>
                             <div className="relative w-5.5 h-5.5 rounded-full bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 border border-amber-200/50 flex items-center justify-center shadow-md z-10">
-                              <span className="text-[8px]">🥇</span>
+                              <img src={firstplace} className="w-3.5 h-3.5" alt="Gold Medal" referrerPolicy="no-referrer" />
                             </div>
                           </div>
                         );
@@ -718,7 +724,7 @@ export default function WorkoutTracker({
                               <div className="w-[5px] h-full bg-blue-550 -rotate-12 origin-top rounded-b-sm" />
                             </div>
                             <div className="relative w-5.5 h-5.5 rounded-full bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 border border-slate-100/40 flex items-center justify-center shadow-md z-10">
-                              <span className="text-[8px]">🥈</span>
+                              <img src={secondplace} className="w-3.5 h-3.5" alt="Silver Medal" referrerPolicy="no-referrer" />
                             </div>
                           </div>
                         );
@@ -730,7 +736,7 @@ export default function WorkoutTracker({
                               <div className="w-[5px] h-full bg-blue-550 -rotate-12 origin-top rounded-b-sm" />
                             </div>
                             <div className="relative w-5.5 h-5.5 rounded-full bg-gradient-to-br from-orange-400 to-amber-800 border border-orange-750/40 flex items-center justify-center shadow-md z-10">
-                              <span className="text-[8px]">🥉</span>
+                              <img src={thirdplace} className="w-3.5 h-3.5" alt="Bronze Medal" referrerPolicy="no-referrer" />
                             </div>
                           </div>
                         );
@@ -960,7 +966,7 @@ export default function WorkoutTracker({
                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 blur-[25px] rounded-full pointer-events-none" />
                <div>
                  <div className="flex items-center gap-1 text-indigo-100 select-none">
-                   <Flame size={14} className="text-[#fbbf24]" />
+                   <img src={fire} className="w-4 h-4" alt="Fire" referrerPolicy="no-referrer" />
                    <span className="text-[9px] font-black uppercase tracking-widest text-[#ebdfff] font-sans">GYM STREAK</span>
                  </div>
                  <div className="flex items-baseline gap-2 mt-1">
@@ -1000,8 +1006,8 @@ export default function WorkoutTracker({
                   return (
                     <div className="bg-[#13112a] rounded-[24px] p-5 text-white border-[1.5px] border-white/5 shadow-xl relative overflow-hidden flex flex-col justify-center items-center text-center py-10 select-none">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-550/5 blur-[50px] rounded-full pointer-events-none" />
-                      <div className="w-12 h-12 bg-[#1e1a42] rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner border border-[#fbbf24]/10 select-none">
-                        🏆
+                      <div className="w-12 h-12 bg-[#1e1a42] rounded-full flex items-center justify-center mb-3 shadow-inner border border-[#fbbf24]/10 select-none p-2 shrink-0">
+                        <img src="/svg/trophy-star.svg" className="w-full h-full object-contain" alt="Trophy" referrerPolicy="no-referrer" />
                       </div>
                       <h3 className="text-sm font-extrabold text-[#fbbf24] tracking-wider uppercase">Spotlight Rekor Utama</h3>
                       <p className="text-xs text-white/95 mt-1 font-bold">Belum Ada Rekor Latihan</p>
@@ -1046,8 +1052,8 @@ export default function WorkoutTracker({
                         <div>
                           {/* Header Row */}
                           <div className={cn("flex items-center gap-2.5 pb-1", showPr.isDemo ? "pr-24" : "pr-2")}>
-                            <div className="w-10 h-10 bg-[#1e1a42] rounded-full flex items-center justify-center text-xl shrink-0 shadow-inner border border-[#fbbf24]/10">
-                              🏆
+                            <div className="w-10 h-10 bg-[#1e1a42] rounded-full flex items-center justify-center shrink-0 shadow-inner border border-[#fbbf24]/10 p-2">
+                              <img src={trophy} className="w-full h-full object-contain" alt="Trophy" referrerPolicy="no-referrer" />
                             </div>
                             <div className="flex flex-col min-w-0">
                               <div className="flex items-center gap-1 text-[#fbbf24] text-[8px] sm:text-[9px] font-black uppercase tracking-widest font-sans overflow-hidden text-ellipsis whitespace-nowrap">
@@ -1079,10 +1085,7 @@ export default function WorkoutTracker({
                         {/* Progress banner */}
                         <div className="bg-[#102d23]/80 border border-[#1b5c46]/30 text-[#4ade80] rounded-[12px] p-2.5 flex items-center gap-2 mt-auto">
                            <div className="w-7 h-7 bg-white rounded flex items-center justify-center shrink-0">
-                              <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                                 <polyline points="16 7 22 7 22 13" />
-                              </svg>
+                              <img src={trendup} className="w-4 h-4" alt="Trend Up" referrerPolicy="no-referrer" />
                            </div>
                            <div className="flex-1 min-w-0">
                               <p className="text-xs font-black tracking-tight text-[#4ade80] leading-none">
@@ -1374,46 +1377,64 @@ export default function WorkoutTracker({
               onClick={() => setPrCelebration(null)}
             />
 
-            {/* Confetti Particles */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {[...Array(25)].map((_, i) => {
-                const randomX = Math.random() * 100;
-                const randomDelay = Math.random() * 1.5;
-                const randomDuration = 2 + Math.random() * 2;
-                const colors = ['#fbbf24', '#60a5fa', '#34d399', '#f472b6', '#a78bfa'];
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ y: -20, x: `${randomX}%`, opacity: 1, scale: 0.5 + Math.random() * 0.8 }}
-                    animate={{ y: '110vh', rotate: 360 }}
-                    transition={{
-                      duration: randomDuration,
-                      delay: randomDelay,
-                      repeat: Infinity,
-                      ease: 'linear'
-                    }}
-                    style={{ backgroundColor: randomColor }}
-                    className="absolute w-2 h-4 rounded-sm"
-                  />
-                );
-              })}
-            </div>
-
             <motion.div
               initial={{ scale: 0.85, y: 50, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.85, y: 50, opacity: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 18 }}
-              className="relative w-full max-w-md bg-[#13112a] text-white rounded-[32px] p-8 border border-[#fbbf24]/20 shadow-2xl overflow-hidden flex flex-col items-center justify-center text-center font-sans"
+              className="relative w-full max-w-md bg-[#13112a] text-white rounded-[32px] p-8 border border-[#fbbf24]/20 shadow-2xl flex flex-col items-center justify-center text-center font-sans"
             >
-              {/* Soft purple glow circles */}
-              <div className="absolute top-0 w-48 h-48 bg-[#fbbf24]/10 blur-[50px] rounded-full pointer-events-none" />
-              <div className="absolute bottom-0 w-48 h-48 bg-indigo-500/10 blur-[50px] rounded-full pointer-events-none" />
+              {/* Overflow hidden background wrapper for the soft purple glow circles */}
+              <div className="absolute inset-0 rounded-[31px] overflow-hidden pointer-events-none">
+                {/* Soft purple glow circles */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#fbbf24]/10 blur-[50px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-indigo-500/10 blur-[50px] rounded-full pointer-events-none" />
+              </div>
 
-              <div className="w-20 h-20 bg-[#252055] rounded-full flex items-center justify-center text-4xl mb-6 shadow-inner border border-[#fbbf24]/20 animate-bounce">
-                🎉
+              <div className="relative mb-6">
+                {/* Emitter of Popping Confetti originating from the 🎉 logo */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {[...Array(40)].map((_, i) => {
+                    const angle = (i * (360 / 40) + Math.random() * 10) * (Math.PI / 180);
+                    const speed = 120 + Math.random() * 200; // distance
+                    const targetX = Math.cos(angle) * speed;
+                    const targetY = Math.sin(angle) * speed;
+                    const randomRotate = (Math.random() - 0.5) * 720;
+                    const colors = ['#fbbf24', '#60a5fa', '#34d399', '#f472b6', '#a78bfa', '#ffedd5'];
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    const size = 6 + Math.random() * 8; // random width/height
+                    const delay = Math.random() * 0.15; // slight staggered explosion
+                    
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ x: 0, y: 0, scale: 0.1, opacity: 1 }}
+                        animate={{
+                          x: [0, targetX * 0.7, targetX],
+                          y: [0, targetY * 0.6 - 60, targetY + 40], // gravity arch
+                          rotate: [0, randomRotate / 2, randomRotate],
+                          scale: [0.1, 1.2, 0.8, 0],
+                          opacity: [1, 1, 0.8, 0]
+                        }}
+                        transition={{
+                          duration: 1.2 + Math.random() * 0.8,
+                          delay: delay,
+                          ease: [0.1, 0.8, 0.3, 1] // swift explosion decelerating nicely
+                        }}
+                        style={{ 
+                          backgroundColor: randomColor,
+                          width: `${size}px`,
+                          height: `${size * (0.6 + Math.random() * 0.8)}px`,
+                        }}
+                        className="absolute rounded-sm"
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="w-20 h-20 bg-[#252055] rounded-full flex items-center justify-center text-4xl shadow-inner border border-[#fbbf24]/20 animate-bounce relative z-10">
+                  🎉
+                </div>
               </div>
 
               <div className="flex items-center gap-1.5 text-[#fbbf24] font-black text-[10px] tracking-widest uppercase mb-2">

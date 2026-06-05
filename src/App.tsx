@@ -404,7 +404,7 @@ const AppLayout = ({ children, onLogout, userName }: { children: React.ReactNode
             </div>
           </header>
 
-          <div className="flex-1 p-4 md:p-8 pb-32 md:pb-8">
+          <div className="flex-1 p-4 pb-36 md:p-8 md:pb-36 lg:pb-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -1056,7 +1056,7 @@ export default function App() {
     <Router>
       <AppLayout onLogout={handleLogout} userName={userName}>
         <Routes>
-          <Route path="/" element={<Dashboard expenses={expenses} notes={notes} nutrition={nutrition} jobs={jobs} workouts={workouts} vehicle={vehicle} />} />
+          <Route path="/" element={<Dashboard expenses={expenses} notes={notes} nutrition={nutrition} jobs={jobs} workouts={workouts} vehicle={vehicle} vaultItems={vaultItems} />} />
           <Route 
             path="/expenses" 
             element={<ExpenseTracker expenses={expenses} setExpenses={setExpenses} />} 
