@@ -248,7 +248,7 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest md:hidden">Today's kcal</div>
                </div>
                <div className="text-right md:text-center mt-1">
-                  <div className="text-4xl font-black text-[#F59E0B] tracking-tight">{dailyCalories || 480}</div>
+                  <div className="text-4xl font-black text-[#F59E0B] tracking-tight">{dailyCalories}</div>
                   <div className="text-[9px] font-extrabold text-emerald-700/85 uppercase tracking-wider hidden md:block">Today's Kcal</div>
                </div>
             </div>
@@ -261,7 +261,7 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                  <div>
                    <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider mb-1">
                      <span className="text-slate-400">Sugar</span>
-                     <span className="text-slate-800 font-extrabold">{dailySugar || 2}g</span>
+                     <span className="text-slate-800 font-extrabold">{dailySugar}g</span>
                    </div>
                    <div className="w-full h-1.5 bg-slate-100 rounded-full">
                      <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min(((dailySugar || 2)/50)*100, 100)}%` }} />
@@ -272,10 +272,10 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                  <div>
                    <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider mb-1">
                      <span className="text-slate-400">Protein</span>
-                     <span className="text-slate-800 font-extrabold">{todayNutrition.reduce((sum, n) => sum + n.protein, 0) || 32}g</span>
+                     <span className="text-slate-800 font-extrabold">{todayNutrition.reduce((sum, n) => sum + n.protein, 0)}g</span>
                    </div>
                    <div className="w-full h-1.5 bg-slate-100 rounded-full">
-                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(((todayNutrition.reduce((sum, n) => sum + n.protein, 0) || 32)/60)*100, 100)}%` }} />
+                     <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(((todayNutrition.reduce((sum, n) => sum + n.protein, 0))/60)*100, 100)}%` }} />
                    </div>
                  </div>
 
@@ -283,10 +283,10 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                  <div>
                    <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider mb-1">
                      <span className="text-slate-400">Fat</span>
-                     <span className="text-slate-800 font-extrabold">{todayNutrition.reduce((sum, n) => sum + (n.fat || 0), 0) || 15}g</span>
+                     <span className="text-slate-800 font-extrabold">{todayNutrition.reduce((sum, n) => sum + (n.fat || 0), 0)}g</span>
                    </div>
                    <div className="w-full h-1.5 bg-slate-100 rounded-full">
-                     <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(((todayNutrition.reduce((sum, n) => sum + (n.fat || 0), 0) || 15)/70)*100, 100)}%` }} />
+                     <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(((todayNutrition.reduce((sum, n) => sum + (n.fat || 0), 0))/70)*100, 100)}%` }} />
                    </div>
                  </div>
 
@@ -294,7 +294,7 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                  <div>
                    <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider mb-1">
                      <span className="text-slate-400">Carbs</span>
-                     <span className="text-slate-800 font-extrabold">{dailyCarbs || 49}g</span>
+                     <span className="text-slate-800 font-extrabold">{dailyCarbs}g</span>
                    </div>
                    <div className="w-full h-1.5 bg-slate-100 rounded-full">
                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(((dailyCarbs || 49)/250)*100, 100)}%` }} />
@@ -313,13 +313,9 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                      <span className="text-[#f59e0b] font-extrabold shrink-0">{todayNutrition[0].calories} kcal</span>
                    </div>
                  ) : (
-                   <div className="px-4 py-3 bg-[#fffbeb] border border-[#fef3c7] rounded-xl flex justify-between items-center text-xs font-semibold shadow-sm">
-                     <div className="flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-full bg-[#f59e0b] shadow-sm animate-pulse" />
-                       <span className="truncate text-slate-800 font-bold">Ayam dada Kaleyo dengan nasi</span>
-                     </div>
-                     <span className="text-[#f59e0b] font-extrabold shrink-0">480 kcal</span>
-                   </div>
+                    <div className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-400 font-medium">
+    Belum ada makanan dicatat hari ini
+  </div>
                  )}
                </div>
             </div>
@@ -338,14 +334,14 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
         >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-2">
              <div className="p-5 md:p-6 bg-indigo-50/70 rounded-2xl border border-indigo-100 flex flex-col justify-center items-center text-center shadow-sm">
-                <div className="text-4xl font-black text-[#6366F1]">{jobs.length || 47}</div>
+                <div className="text-4xl font-black text-[#6366F1]">{jobs.length}</div>
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Apps</div>
              </div>
              
              <div className="md:col-span-3 flex flex-col gap-4">
                 <div className="grid grid-cols-3 gap-3">
                    <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm text-center">
-                      <div className="text-lg font-bold text-[#6366F1]">{jobs.filter(j => ['Applied', 'Screening', 'Interviewing', 'Technical'].includes(j.status)).length || 42}</div>
+                      <div className="text-lg font-bold text-[#6366F1]">{jobs.filter(j => ['Applied', 'Screening', 'Interviewing', 'Technical'].includes(j.status)).length}</div>
                       <div className="text-[9px] uppercase font-bold text-slate-400">Active</div>
                    </div>
                    <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm text-center">
@@ -353,7 +349,7 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                       <div className="text-[9px] uppercase font-bold text-slate-400">Offers</div>
                    </div>
                    <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm text-center">
-                      <div className="text-lg font-bold text-rose-600">{jobs.filter(j => ['Rejected', 'Withdrawn'].includes(j.status)).length || 5}</div>
+                      <div className="text-lg font-bold text-rose-600">{jobs.filter(j => ['Rejected', 'Withdrawn'].includes(j.status)).length}</div>
                       <div className="text-[9px] uppercase font-bold text-slate-400">Closed</div>
                    </div>
                 </div>
@@ -447,42 +443,9 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
                   ))}
                </div>
              ) : (
-                // Beautiful mock items matching custom screenshots when list is empty
-                <div className="space-y-2 mt-2">
-                   <div className="flex items-center justify-between p-3 border-l-4 border-l-[#EF4444] rounded-r-xl rounded-l-md border border-slate-100 border-l-0 bg-slate-50/70 hover:bg-white transition-all shadow-sm">
-                      <div className="font-bold text-xs text-slate-800 truncate pr-2">Bench press</div>
-                      <div className="flex flex-col items-end shrink-0">
-                         <div className="font-black text-[#EF4444] text-sm leading-none">
-                           10 <span className="text-[9px] text-[#EF4444]/80">kg</span>
-                         </div>
-                         <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase">
-                           2 sets
-                         </div>
-                      </div>
-                   </div>
-                   <div className="flex items-center justify-between p-3 border-l-4 border-l-[#EF4444] rounded-r-xl rounded-l-md border border-slate-100 border-l-0 bg-slate-50/70 hover:bg-white transition-all shadow-sm">
-                      <div className="font-bold text-xs text-slate-800 truncate pr-2 font-semibold">OHT Pushdown</div>
-                      <div className="flex flex-col items-end shrink-0">
-                         <div className="font-black text-[#EF4444] text-sm leading-none">
-                           10 <span className="text-[9px] text-[#EF4444]/80">kg</span>
-                         </div>
-                         <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase">
-                           2 sets
-                         </div>
-                      </div>
-                   </div>
-                   <div className="flex items-center justify-between p-3 border-l-4 border-l-[#EF4444] rounded-r-xl rounded-l-md border border-slate-100 border-l-0 bg-slate-50/70 hover:bg-white transition-all shadow-sm">
-                      <div className="font-bold text-xs text-slate-800 truncate pr-2">Lateral Rise</div>
-                      <div className="flex flex-col items-end shrink-0">
-                         <div className="font-black text-[#EF4444] text-sm leading-none">
-                           10 <span className="text-[9px] text-[#EF4444]/80">kg</span>
-                         </div>
-                         <div className="text-[9px] font-bold text-slate-400 mt-1 uppercase">
-                           2 sets
-                         </div>
-                      </div>
-                   </div>
-                </div>
+                <div className="text-center py-4 text-slate-400 text-xs font-medium border border-dashed rounded-xl">
+    No workout data yet
+  </div>
              )}
           </div>
         </BentoCard>
@@ -594,4 +557,3 @@ export default function Dashboard({ expenses, notes, nutrition, jobs = [], worko
     </div>
   );
 }
-

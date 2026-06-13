@@ -46,7 +46,7 @@ export interface BodyProfile {
   hip?: number; // cm (required for females)
 }
 
-export type ApplicationStatus = 'Applied' | 'Screening' | 'Interviewing' | 'Technical' | 'Offer' | 'Rejected' | 'Withdrawn';
+export type ApplicationStatus = 'Wishlist' | 'Applied' | 'Screening' | 'Interviewing' | 'Technical' | 'Offer' | 'Rejected' | 'Withdrawn';
 
 export interface JobApplication {
   id: string;
@@ -54,6 +54,7 @@ export interface JobApplication {
   position: string;
   status: ApplicationStatus;
   dateApplied: string;
+  closingDate?: string;
   location: string;
   salary?: string;
   url?: string;

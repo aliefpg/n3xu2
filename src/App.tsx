@@ -19,7 +19,7 @@ import WorkoutTracker from './pages/WorkoutTracker';
 import VehicleTracker from './pages/VehicleTracker';
 import PasswordVault from './pages/PasswordVault';
 import { INITIAL_EXPENSES, INITIAL_NOTES, INITIAL_NUTRITION, INITIAL_JOBS, INITIAL_BODY_PROFILE, INITIAL_VEHICLE_STATE, INITIAL_VAULT_ITEMS } from './mockData';
-import { Expense, Note, NutritionEntry, JobApplication, FoodLibraryItem, WorkoutEntry, VehicleState, VaultItem } from './types';
+import { Expense, Note, NutritionEntry, JobApplication, FoodLibraryItem, WorkoutEntry, VehicleState, VaultItem, ApplicationStatus } from './types';
 
 const NavItem = ({ to, icon: Icon, label, active }: { to: string; icon: any; label: string; active: boolean; key?: React.Key }) => (
   <Link

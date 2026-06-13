@@ -134,7 +134,7 @@ export default function WorkoutTracker({
 
   // Compute active continuous streak of consecutive workout days
   const currentStreak = useMemo(() => {
-    if (workouts.length === 0) return 5; // Fallback so dashboard is gorgeous and exactly as in screenshot
+    if (workouts.length === 0) return 0; // Fallback so dashboard is gorgeous and exactly as in screenshot
 
     const uniqueDates = Array.from(new Set(
       workouts.map(w => format(new Date(w.date), 'yyyy-MM-dd'))

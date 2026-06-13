@@ -67,7 +67,7 @@ export const fetchFromSupabase = async () => {
       id: row.id, name: row.name, calories: row.calories, sugar: row.sugar, protein: row.protein, fat: row.fat, carbs: row.carbs, sodium: row.sodium, type: row.type, date: row.date
     })),
     jobs: (jobs || []).map(row => ({
-      id: row.id, company: row.company, position: row.position, status: row.status, dateApplied: row.date_applied, location: row.location, salary: row.salary || '', url: row.url || '', notes: row.notes || '', platform: row.platform || '', source: row.source || ''
+      id: row.id, company: row.company, position: row.position, status: row.status, dateApplied: row.date_applied, closingDate: row.closing_date || undefined, location: row.location, salary: row.salary || '', url: row.url || '', notes: row.notes || '', platform: row.platform || '', source: row.source || ''
     })),
     customFoodCatalog: (customFoodCatalog || []).map(row => ({
       name: row.name, calories: row.calories, sugar: row.sugar, protein: row.protein, fat: row.fat, carbs: row.carbs, sodium: row.sodium, type: row.type
@@ -140,7 +140,7 @@ export const syncToSupabase = async (data: any) => {
       handleSync('expenses', data.expenses, (e: Expense) => ({ id: e.id, amount: e.amount, category: e.category, description: e.description, date: e.date, type: e.type })),
       handleSync('notes', data.notes, (n: Note) => ({ id: n.id, title: n.title, content: n.content, last_modified: n.lastModified, type: n.type, attachments: n.attachments })),
       handleSync('nutrition', data.nutrition, (n: NutritionEntry) => ({ id: n.id, name: n.name, calories: n.calories, sugar: n.sugar, protein: n.protein, fat: n.fat, carbs: n.carbs, sodium: n.sodium, type: n.type, date: n.date })),
-      handleSync('jobs', data.jobs, (j: JobApplication) => ({ id: j.id, company: j.company, position: j.position, status: j.status, date_applied: j.dateApplied, location: j.location, salary: j.salary, url: j.url, notes: j.notes, platform: j.platform, source: j.source })),
+      handleSync('jobs', data.jobs, (j: JobApplication) => ({ id: j.id, company: j.company, position: j.position, status: j.status, date_applied: j.dateApplied, closing_date: j.closingDate || null, location: j.location, salary: j.salary, url: j.url, notes: j.notes, platform: j.platform, source: j.source })),
       handleSync('custom_food_catalog', data.customFoodCatalog, (c: FoodLibraryItem) => ({ name: c.name, calories: c.calories, sugar: c.sugar, protein: c.protein, fat: c.fat, carbs: c.carbs, sodium: c.sodium, type: c.type }), 'name'),
       handleSync('workouts', data.workouts, (w: WorkoutEntry) => ({ id: w.id, exercise_name: w.exerciseName, weight: w.weight, sets: w.sets, reps: w.reps, sets_collection: w.setsCollection, date: w.date })),
       handleSync('vehicle_logs', data.vehicle?.logs, (l: VehicleLog) => ({ id: l.id, date: l.date, distance_added: l.distanceAdded, title: l.title, note: l.note, cost: l.cost, type: l.type })),
@@ -149,10 +149,20 @@ export const syncToSupabase = async (data: any) => {
     ]);
 
     if (data.vehicle) {
-      await supabase.from('vehicle_state').upsert({ id: 1, current_odo: data.vehicle.currentOdo, user_id: userId });
+      const vState = await supabase.from('vehicle_state').select('id').eq('user_id', userId).maybeSingle();
+      if (vState.data?.id) {
+        await supabase.from('vehicle_state').update({ current_odo: data.vehicle.currentOdo }).eq('user_id', userId);
+      } else {
+        await supabase.from('vehicle_state').insert({ current_odo: data.vehicle.currentOdo, user_id: userId });
+      }
     }
     if (data.bodyProfile) {
-      await supabase.from('body_profile').upsert({ id: 1, weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip, user_id: userId });
+      const bProfile = await supabase.from('body_profile').select('id').eq('user_id', userId).maybeSingle();
+      if (bProfile.data?.id) {
+        await supabase.from('body_profile').update({ weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip }).eq('user_id', userId);
+      } else {
+        await supabase.from('body_profile').insert({ weight: data.bodyProfile.weight, height: data.bodyProfile.height, age: data.bodyProfile.age, gender: data.bodyProfile.gender, neck: data.bodyProfile.neck, waist: data.bodyProfile.waist, hip: data.bodyProfile.hip, user_id: userId });
+      }
     }
   } catch (err) {
     console.error('Failed to sync data to Supabase:', err);
