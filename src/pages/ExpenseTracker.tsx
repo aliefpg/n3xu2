@@ -6,7 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, Search, Filter, ArrowDown, ArrowUp, DollarSign, 
-  TrendingUp, Calendar, Tag, Trash2, ChevronLeft, ChevronRight 
+  TrendingUp, Calendar, Tag, Trash2, ChevronLeft, ChevronRight, RotateCcw
 } from 'lucide-react';
 import { format, isToday, addDays, subDays } from 'date-fns';
 import { cn } from '../lib/utils';
@@ -38,6 +38,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
   const [viewInterval, setViewInterval] = useState<'WEEKLY' | 'MONTHLY'>('WEEKLY');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   
   // New Expense State
   const [newExpense, setNewExpense] = useState<{
@@ -145,6 +146,11 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
   const removeExpense = (id: string) => {
     setExpenses(prev => prev.filter(e => e.id !== id));
     setExpenseToDelete(null);
+  };
+
+  const handleResetAll = () => {
+    setExpenses([]);
+    setIsResetModalOpen(false);
   };
 
   return (
@@ -396,6 +402,19 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
         onCancel={() => setExpenseToDelete(null)}
       />
 
+      {/* Reset All Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={isResetModalOpen}
+        title="Reset Semua Transaksi?"
+        description={
+          <>
+            Apakah Anda yakin ingin menghapus <strong className="font-bold text-stone-900">semua</strong> transaksi expense dan income?<br />Tindakan ini permanen dan tidak dapat dibatalkan.
+          </>
+        }
+        onConfirm={handleResetAll}
+        onCancel={() => setIsResetModalOpen(false)}
+      />
+
       {/* Transactions Table Section */}
       <div className="space-y-6">
          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2 md:px-4">
@@ -411,6 +430,14 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                     className="pl-9 pr-4 py-2 rounded-lg bg-white border border-slate-200 focus:border-blue-500 outline-none transition-all w-full md:w-64 text-xs shadow-sm"
                   />
                </div>
+               <button 
+                onClick={() => setIsResetModalOpen(true)}
+                className="flex items-center gap-2 px-4 md:px-5 py-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 rounded-lg transition-all font-bold text-xs whitespace-nowrap"
+                title="Reset semua transaksi"
+               >
+                  <RotateCcw size={16} />
+                  <span>Reset</span>
+               </button>
                <button 
                 onClick={() => setIsAddModalOpen(true)}
                 className="flex items-center gap-2 px-4 md:px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg shadow-blue-500/20 transition-all font-bold text-xs whitespace-nowrap"
@@ -429,7 +456,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                      <tr className="bg-slate-50 border-b border-slate-200">
                         <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</th>
                         <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Category</th>
-                        <th className="px-8 py-4 text-[10px) font-bold uppercase tracking-widest text-slate-400">Date</th>
+                        <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Date</th>
                         <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Amount</th>
                         <th className="px-8 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400"></th>
                      </tr>
