@@ -31,6 +31,8 @@ const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
 const EXPENSE_CATEGORIES: ExpenseCategory[] = ['Food', 'Transport', 'Entertainment', 'Healthcare', 'Utilities', 'Shopping', 'Other'];
 const INCOME_CATEGORIES: ExpenseCategory[] = ['Salary', 'Bonus', 'Investment', 'Other'];
 
+const getExpenseTotal = (expense: Expense) => expense.amount + (expense.type === 'income' ? 0 : expense.admin || 0);
+
 export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Expense[], setExpenses: React.Dispatch<React.SetStateAction<Expense[]>> }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,11 +46,13 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
   const [newExpense, setNewExpense] = useState<{
     description: string;
     amount: string;
+    admin: string;
     category: ExpenseCategory;
     type: 'expense' | 'income';
   }>({
     description: '',
     amount: '',
+    admin: '',
     category: 'Food',
     type: 'expense'
   });
@@ -62,13 +66,14 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
       description: newExpense.description,
       amount: parseFloat(newExpense.amount.replace(/\./g, '')),
       category: newExpense.category,
+      ...(newExpense.type === 'expense' && newExpense.admin ? { admin: parseFloat(newExpense.admin.replace(/\./g, '')) } : {}),
       date: selectedDate.toISOString(),
       type: newExpense.type
     };
 
     setExpenses([expense, ...expenses]);
     setIsAddModalOpen(false);
-    setNewExpense({ description: '', amount: '', category: 'Food', type: 'expense' });
+    setNewExpense({ description: '', amount: '', admin: '', category: 'Food', type: 'expense' });
   };
 
   // Stats
@@ -87,7 +92,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
       if (e.type === 'income') {
         dailyIncome += e.amount;
       } else {
-        dailyExpense += e.amount;
+        dailyExpense += getExpenseTotal(e);
       }
     });
 
@@ -95,7 +100,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
       if (e.type === 'income') {
         totalIncome += e.amount;
       } else {
-        totalExpense += e.amount;
+        totalExpense += getExpenseTotal(e);
       }
     });
 
@@ -105,7 +110,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
   const categoryData = useMemo(() => {
     const data: Record<string, number> = {};
     expenses.filter(e => e.type !== 'income').forEach(e => {
-      data[e.category] = (data[e.category] || 0) + e.amount;
+      data[e.category] = (data[e.category] || 0) + getExpenseTotal(e);
     });
     return Object.entries(data)
       .map(([name, value]) => ({ name, value }))
@@ -120,7 +125,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
       
       const dayExpense = expenses
         .filter(e => e.type !== 'income' && format(new Date(e.date), 'yyyy-MM-dd') === dateStr)
-        .reduce((sum, e) => sum + e.amount, 0);
+        .reduce((sum, e) => sum + getExpenseTotal(e), 0);
 
       const dayIncome = expenses
         .filter(e => e.type === 'income' && format(new Date(e.date), 'yyyy-MM-dd') === dateStr)
@@ -137,7 +142,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
 
   const filteredExpenses = useMemo(() => {
     return dailyTransactions.filter(e => {
-      const matchesSearch = e.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = e.description.toLowerCase().includes(searchTerm.toLowerCase()) || (e.admin?.toLocaleString('id-ID') || '').includes(searchTerm.toLowerCase());
       const matchesCategory = categoryFilter === 'All' || e.category === categoryFilter;
       return matchesSearch && matchesCategory;
     });
@@ -206,7 +211,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                   >EXPENSE</button>
                   <button 
                     type="button"
-                    onClick={() => setNewExpense({...newExpense, type: 'income', category: 'Salary'})}
+                    onClick={() => setNewExpense({...newExpense, admin: '', type: 'income', category: 'Salary'})}
                     className={cn("flex-1 py-3 rounded-lg text-sm font-bold transition-all", newExpense.type === 'income' ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400")}
                   >INCOME</button>
                 </div>
@@ -222,6 +227,21 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300"
                   />
                 </div>
+                {newExpense.type === 'expense' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Biaya Admin (opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="0"
+                      value={newExpense.admin}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setNewExpense({...newExpense, admin: val ? Number(val).toLocaleString('id-ID') : ''});
+                      }}
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Amount</label>
@@ -394,7 +414,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
         description={
           expenseToDelete ? (
             <>
-              Apakah Anda yakin ingin menghapus transaksi <strong className="font-bold text-stone-900">"{expenseToDelete.description}"</strong> senilai <strong className="font-bold text-stone-900">Rp {expenseToDelete.amount.toLocaleString('id-ID')}</strong>?<br />Tindakan ini permanen.
+              Apakah Anda yakin ingin menghapus transaksi <strong className="font-bold text-stone-900">"{expenseToDelete.description}"</strong> senilai <strong className="font-bold text-stone-900">Rp {getExpenseTotal(expenseToDelete).toLocaleString('id-ID')}</strong>?<br />Tindakan ini permanen.
             </>
           ) : ""
         }
@@ -466,6 +486,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                         <tr key={expense.id} className="group hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
                            <td className="px-8 py-5">
                               <span className="text-sm font-semibold text-slate-700">{expense.description}</span>
+                              {expense.admin && <div className="text-xs text-slate-400 mt-1">Biaya admin: Rp {expense.admin.toLocaleString('id-ID')}</div>}
                            </td>
                            <td className="px-8 py-5">
                               <div className="flex items-center gap-2">
@@ -478,7 +499,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                            </td>
                            <td className="px-8 py-5 text-right">
                               <span className={cn("text-sm font-bold", expense.type === 'income' ? "text-emerald-600" : "text-slate-900")}>
-                                {expense.type === 'income' ? '+' : '-'}Rp {expense.amount.toLocaleString('id-ID')}
+                                {expense.type === 'income' ? '+' : '-'}Rp {getExpenseTotal(expense).toLocaleString('id-ID')}
                               </span>
                            </td>
                            <td className="px-8 py-5 text-right">
@@ -506,6 +527,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                      </div>
                      <div>
                         <div className="text-sm font-bold text-slate-800">{expense.description}</div>
+                      {expense.admin && <div className="text-xs text-slate-400 mt-0.5">Biaya admin: Rp {expense.admin.toLocaleString('id-ID')}</div>}
                         <div className="flex items-center gap-2 mt-0.5">
                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[expense.category] }} />
                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{expense.category} • {format(new Date(expense.date), 'MMM dd')}</span>
@@ -514,7 +536,7 @@ export default function ExpenseTracker({ expenses, setExpenses }: { expenses: Ex
                   </div>
                   <div className="flex items-center gap-4">
                      <div className={cn("text-sm font-black", expense.type === 'income' ? "text-emerald-600" : "text-rose-500")}>
-                       {expense.type === 'income' ? '+' : '-'}Rp {expense.amount.toLocaleString('id-ID')}
+                       {expense.type === 'income' ? '+' : '-'}Rp {getExpenseTotal(expense).toLocaleString('id-ID')}
                      </div>
                      <button onClick={() => setExpenseToDelete(expense)} className="text-slate-200 hover:text-rose-500 transition-colors">
                         <Trash2 size={16} />

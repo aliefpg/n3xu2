@@ -5,6 +5,7 @@ export interface Expense {
   amount: number;
   category: ExpenseCategory;
   description: string;
+  admin?: number;
   date: string;
   type?: 'expense' | 'income';
 }
