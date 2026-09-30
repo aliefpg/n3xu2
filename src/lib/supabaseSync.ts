@@ -58,7 +58,7 @@ export const fetchFromSupabase = async () => {
 
   return {
     expenses: (expenses || []).map(row => ({
-      id: row.id, amount: row.amount, category: row.category, description: row.description, date: row.date, type: row.type || 'expense'
+      id: row.id, amount: row.amount, admin: row.admin_fee, category: row.category, description: row.description, date: row.date, type: row.type || 'expense'
     })),
     notes: (notes || []).map(row => ({
       id: row.id, title: row.title, content: row.content, lastModified: row.last_modified, type: row.type, attachments: row.attachments || []
@@ -137,7 +137,7 @@ export const syncToSupabase = async (data: any) => {
 
   try {
     await Promise.all([
-      handleSync('expenses', data.expenses, (e: Expense) => ({ id: e.id, amount: e.amount, category: e.category, description: e.description, date: e.date, type: e.type })),
+      handleSync('expenses', data.expenses, (e: Expense) => ({ id: e.id, amount: e.amount, admin_fee: e.admin, category: e.category, description: e.description, date: e.date, type: e.type })),
       handleSync('notes', data.notes, (n: Note) => ({ id: n.id, title: n.title, content: n.content, last_modified: n.lastModified, type: n.type, attachments: n.attachments })),
       handleSync('nutrition', data.nutrition, (n: NutritionEntry) => ({ id: n.id, name: n.name, calories: n.calories, sugar: n.sugar, protein: n.protein, fat: n.fat, carbs: n.carbs, sodium: n.sodium, type: n.type, date: n.date })),
       handleSync('jobs', data.jobs, (j: JobApplication) => ({ id: j.id, company: j.company, position: j.position, status: j.status, date_applied: j.dateApplied, closing_date: j.closingDate || null, location: j.location, salary: j.salary, url: j.url, notes: j.notes, platform: j.platform, source: j.source })),
